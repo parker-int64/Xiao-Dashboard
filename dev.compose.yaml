@@ -1,0 +1,12 @@
+name: "xiao_dashboard_dev"
+services:
+    dev:
+        build:
+            context: .
+            target: dev
+        ports:
+            - "5173:5173"
+        volumes:
+            - .:/app
+        environment:
+            - NODE_ENV=development

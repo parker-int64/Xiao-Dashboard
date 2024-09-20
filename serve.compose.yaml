@@ -1,0 +1,12 @@
+# Docusaurus
+name: "xiao_dashboard_serve"
+services:
+    serve:
+        build:
+            context: .
+            target: serve
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=production
+            - NODE_OPTIONS="--max-old-space-size=4096"
