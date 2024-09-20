@@ -20,7 +20,7 @@ Project is made with Vue3 + Vite + NaiveUI.
 + Clone the repo
 
 ```Shell
-git clone 
+git clone https://github.com/parker-int64/Xiao-Dashboard
 ```
 
 + Change working directory
