@@ -5,6 +5,8 @@ import ViewBox from '../components/ViewBox.vue';
 import Spinner from '../components/Spinner.vue'
 import { ref } from 'vue';
 
+import mqtt from 'mqtt';
+
 import demo1 from '../assets/demo_1.png'
 import demo2 from '../assets/demo_2.png'
 import demo3 from '../assets/demo_3.png'
@@ -67,20 +69,74 @@ const deviceLists = [
 * @param {mqttAddress} the mqtt server's address
 * @param {mqttPort}  port number
 */
-const connectMQTTServer = (mqttAddress, mqttPort) => {
 
+const connectMQTTServer = (mqttAddress, mqttPort) => {
+  const client = mqtt.connect(mqttAddress)
+
+  return client;
 
 }
+
 
 /*
 * @brief Subscribe the MQTT topic
 *        The topics are pre-defined in python-sscma
+* @param {client} the mqtt client
 * @param {deviceId} your device's ID
 */
-const subscribeTopic = (deviceId) => {
-  const txTpoic = `sscma/v0/${deviceId}/tx`
-  const rxTpoic = `sscma/v0/${deviceId}/rx`
+const subscribeTopic = (client, deviceId) => {
+  const txTopic = `sscma/v0/${deviceId}/tx`
+  const rxTopic = `sscma/v0/${deviceId}/rx`
+
+  client.on("connect", () => {
+    client.subscribe(txTopic, (err) => {
+      if (err) {
+        console.log(`Subscribe ${txTopic} failed, error: ${err}`)
+      }
+    })
+
+    client.subscribe(rxTopic, (err) => {
+      if (err) {
+        console.log(`Subscribe ${rxTopic} failed, error: ${err}`)
+      }
+    })
+  })
+
+
+  client.on("message", (topic, message) => {
+    // message is Buffer
+    console.log(`Topic ${topic}, Message: ${message.toString()}`);
+    client.end();
+  })
 }
+
+
+/*
+* @brief Publish message to the MQTT topic
+*        The topics are pre-defined in python-sscma
+* @param {client} the mqtt client
+* @param {deviceId} your device's ID
+* @param {msgPayload} your message
+* refer this link to send message:
+* https://github.com/Seeed-Studio/SSCMA-Micro/blob/dev/docs/protocol/at_protocol.md
+*/
+const publishTopic = (client, deviceId, msgPayload) => {
+  const txTopic = `sscma/v0/${deviceId}/tx`
+  const rxTopic = `sscma/v0/${deviceId}/rx`
+
+
+  client.on("connect", () => {
+    client.subscribe(txTopic, (err) => {
+      if (err) {
+        console.log(`Subscribe ${txTopic} failed, error: ${err}`)
+      } else {
+        client.publish(txTopic, msgPayload);
+      }
+    })
+  })
+
+}
+
 
 
 /*
@@ -94,7 +150,7 @@ const base63ToImage = (base64Str) => {
   image.src = `data:image/png;base64,${base64Str}`;
 
   return image
-  
+
 }
 
 
@@ -102,18 +158,15 @@ const base63ToImage = (base64Str) => {
 
 <template>
 
-<n-grid v-if="!vendorCategory" :x-gap="12" :y-gap="8" cols="2 s:3 m:4 l:4 xl:5 2xl:6" responsive="screen">
-  <n-gi v-for="(device, index) in deviceLists">
-    <!-- <router-link :to="{ name: 'product', params: { id: `${item['product_ID']}`, imgUrl: getItemImgUrl(item['product_ID']) }}" >
+  <n-grid v-if="!vendorCategory" :x-gap="12" :y-gap="8" cols="2 s:3 m:4 l:4 xl:5 2xl:6" responsive="screen">
+    <n-gi v-for="(device, index) in deviceLists">
+      <!-- <router-link :to="{ name: 'product', params: { id: `${item['product_ID']}`, imgUrl: getItemImgUrl(item['product_ID']) }}" >
       <>
     </router-link> -->
-    <ViewBox 
-      v-bind:device-name="device['name']" 
-      v-bind:device-id="device['id']"  
-      v-bind:place-holder="device['img']"
-    />
-  </n-gi>
-</n-grid>
+      <ViewBox v-bind:device-name="device['name']" v-bind:device-id="device['id']"
+        v-bind:place-holder="device['img']" />
+    </n-gi>
+  </n-grid>
 
 
 
@@ -129,5 +182,4 @@ const base63ToImage = (base64Str) => {
 .n-result {
   margin: 60px 0 0 0;
 }
-
 </style>
