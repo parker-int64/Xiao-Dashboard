@@ -144,7 +144,7 @@ const publishTopic = (client, deviceId, msgPayload) => {
 *        
 * @param {base64Str} the base 64 string.
 */
-const base63ToImage = (base64Str) => {
+const base64ToImage = (base64Str) => {
   const image = new Image();
 
   image.src = `data:image/png;base64,${base64Str}`;
